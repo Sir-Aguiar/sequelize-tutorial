@@ -101,3 +101,62 @@ Logo após importar é instanciado uma conexão com o banco, passando para o `co
 
 A classe `Sequelize` representa uma instância do Sequelize, é usada para configurar e estabelecer a conexão com o banco, definir modelos, realizar consultas e executar operações no banco de dados.
 Oferece métodos e recursos adicionais para lidar com migrações de banco de dados, relacionamentos entre modelos, validação de dados, entre outros recursos avançados.
+
+## Criando e gerenciando banco de dados
+
+Até este momento sequer existe uma database NodeSequelize, aquela que especificamos acima.
+
+Para iniciarmos o nosso banco de dados, rode no terminal `npx sequelize db:create`
+Este comando irá criar nossa base de dados especificada no arquivo de configuração
+
+## Migrations
+
+As migrations são uma espécie de versionamento para nosso banco de dados.
+
+`npx sequelize migration:create --name=create-users`
+
+Este comando irá gerar uma migration no diretório especificado em `.sequelizerc`. O argumento --name recebe o nome que será atribuído ao arquivo desta migration, sendo precedido pelo timestamp de quando esta migration foi gerada.
+
+O timestamp é essencial para as migrations, pois quando for necessário utilizar o código em outra máquina, por exemplo, é através delas que os bancos serão sincronizados. E as timestamps indicam a ordem para se executar as migrations.
+
+```js
+"use strict";
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    return await queryInterface.createTable("users", {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false,
+      },
+      name: {
+        type: Sequelize.STRING(255), // 255 bytes are by default
+        allowNull: false,
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+    });
+  },
+
+  async down(queryInterface, Sequelize) {
+    return await queryInterface.dropTable("users");
+  },
+};
+```
+
+Esta é a estrutura padrão de uma migration quando gerada. Os método `up()` é como se fosse um Ctrl+V já e `down()` seria o Ctrl+Z.
+
+`up()` representa o que a migration realizará no banco de dados, como criar uma tabela, por exemplo.
+> Para realizar as migrates, rode no terminal `npx sequelize db:migrate`
+
+`down()` representa o que deve ser desfeito no banco de dados caso algo tenha dado errado ao rodar `up()`, como excluir uma tabela, por exemplo.
+> Ao rodar `npx sequelize db:migrate:undo` vai desfazer a última migration realizada
