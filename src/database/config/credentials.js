@@ -7,8 +7,7 @@ module.exports = {
   database: "NodeSequelize",
   dialect: "postgres",
   define: {
+    timestamps: true,
     underscored: true,
-    underscoredAll: true,
-    timestamp:true
   },
 };

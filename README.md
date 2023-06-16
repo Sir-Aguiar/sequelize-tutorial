@@ -22,8 +22,7 @@ module.exports = {
   dialect: "postgres",
   define: {
     underscored: true,
-    underscoredAll: true,
-    timestamp: true,
+    timestamps: true,
   },
 };
 ```
@@ -44,9 +43,10 @@ module.exports = {
 - `dialect`: Dialeto que o Sequelize usuará. Aqui, "postgres", indicando que o banco de dados é o PostgreSQL.
 
 - `define`: Contém configurações para os modelos do Sequelize:
+
   - `underscored`: Indica se o Sequelize deve usar o estilo "underscored" para os nomes das colunas no banco de dados. Os nomes das colunas serão em letras minúsculas e separados por underscore;
-  - `underscoredAll`: Indica se o estilo "underscored" é para os nomes de todas as colunas, incluindo atributos e campos relacionados;
-  - `timestamp`: Indica se deve preencher automaticamente colunas `createdAt` e `updatedAt` aos modelos, permitindo rastrear a data de criação e atualização dos registros.
+
+  - `timestamps`: Indica se deve preencher automaticamente colunas `createdAt` e `updatedAt` aos modelos, permitindo rastrear a data de criação e atualização dos registros. E que todas as tabelas tabelas terão essas colunas
 
 `.sequelizerc`
 
@@ -125,6 +125,45 @@ O timestamp é essencial para as migrations, pois quando for necessário utiliza
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    /**
+     * Add altering commands here.
+     *
+     * Example:
+     * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
+     */
+  },
+
+  async down(queryInterface, Sequelize) {
+    /**
+     * Add reverting commands here.
+     *
+     * Example:
+     * await queryInterface.dropTable('users');
+     */
+  },
+};
+```
+
+Esta é a estrutura padrão de uma migration quando gerada. Os método `up()` é como se fosse um Ctrl+V já e `down()` seria o Ctrl+Z.
+
+`up()` representa o que a migration realizará no banco de dados, como criar uma tabela, por exemplo.
+
+> Para realizar as migrates, rode no terminal `npx sequelize db:migrate`
+
+`down()` representa o que deve ser desfeito no banco de dados caso algo tenha dado errado ao rodar `up()`, como excluir uma tabela, por exemplo.
+
+> Ao rodar `npx sequelize db:migrate:undo` vai desfazer a última migration realizada.
+
+## Create Table
+
+Como mencionado, estes arquivos são para versionar nosso banco de dados. Vamos começar criando por exemplo uma tabela `users`.
+
+```js
+"use strict";
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
     return await queryInterface.createTable("users", {
       id: {
         type: Sequelize.INTEGER,
@@ -153,10 +192,47 @@ module.exports = {
 };
 ```
 
-Esta é a estrutura padrão de uma migration quando gerada. Os método `up()` é como se fosse um Ctrl+V já e `down()` seria o Ctrl+Z.
+As instruções presentes neste arquivo são bem objetivas, uma vez que não entrarei em detalhes sobre SQL, presumindo que possua conhecimento prévio.
 
-`up()` representa o que a migration realizará no banco de dados, como criar uma tabela, por exemplo.
-> Para realizar as migrates, rode no terminal `npx sequelize db:migrate`
+Cada propriedade definida na minha tabela pode conter diversar propriedades, que serão passadas através de um objeto.
 
-`down()` representa o que deve ser desfeito no banco de dados caso algo tenha dado errado ao rodar `up()`, como excluir uma tabela, por exemplo.
-> Ao rodar `npx sequelize db:migrate:undo` vai desfazer a última migration realizada
+> Caso deseje definir apenas o tipo da coluna a notação `created_at: Sequelize.DATE` funciona da mesma forma.
+
+## Modelos
+
+Model é uma representação de uma tabela do banco de dados em forma de objeto JavaScript. Definindo a estrutura e os relacionamentos da tabela, bem como os métodos e as operações para interagir com seus dados. É através dos models que realizamos nossos `INSERTS`, `SELECT` , etc...
+
+```js
+const { DataTypes } = require("sequelize");
+const NodeSequelize = require("../database");
+
+const User = NodeSequelize.define("User", {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  email: DataTypes.STRING,
+});
+
+module.exports = User;
+```
+
+Começamos importando os `DataTypes`, é uma propriedade que o Sequelize nos dá, ele traz os tipos presentes em nosso SGBD para o ambiente Node.
+
+Importamos então a conexão com o banco de dados que já definimos, e nesta conexão invocamos o método `define()`, que define um model. Este método trabalha com 3 possíveis parâmetros, sendo:
+
+- `modelName` : O nome do Model, usado internamente pelo Sequelize para identificar a tabela correspondente, sendo normalmente definido no singular
+- `attributes`: Um objeto que remete as colunas da tabela e seus tipos de dados. Cada propriedade do objeto representa uma coluna, o valor da propriedade define o tipo de dado dessa coluna. Além disso, você pode definir opções adicionais para cada coluna, como exemplo algumas:
+
+  - allowNull
+  - defaultValue
+  - unique
+  - primaryKey
+
+- `options` (opcional): Um objeto que define as opções adicionais para o Model. Alguns exemplos de opções comuns incluem:
+
+  - `tableName`: O nome da tabela no banco de dados. Se não for especificado, o Sequelize usará o nome do Model no plural como padrão.
+
+  - `timestamps`: Booleano que determina se o deve criar automaticamente as colunas createdAt e updatedAt para rastrear as datas de criação e atualização dos registros nesta tabela.
+  - `paranoid`: Booleano que indica se deve adicionar uma coluna deletedAt para suporte à exclusão lógica (soft delete).
+  - `freezeTableName`: Booleano que determina se o Sequelize deve manter o nome da tabela exatamente como especificado, sem alterar para o plural.

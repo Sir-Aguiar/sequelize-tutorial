@@ -1,10 +1,12 @@
-const { Model, DataTypes } = require("sequelize");
+const { DataTypes } = require("sequelize");
+const NodeSequelize = require("../database");
 
-class User extends Model {
-  // O parâmetro recebido é uma instancia de Sequelize, ou seja, a conexão com a DB
-  static init(sequelize) {
-    super.init({ name: DataTypes.STRING(255) }, { sequelize });
-  }
-}
+const User = NodeSequelize.define("User", {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  email: DataTypes.STRING,
+});
 
 module.exports = User;
